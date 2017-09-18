@@ -48,6 +48,11 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 
+		DataSourcesMap: map[string]*schema.Resource{
+			"chef_data_bag":      dataSourceChefDataBag(),
+			"chef_data_bag_item": dataSourceChefDataBagItem(),
+		},
+
 		ResourcesMap: map[string]*schema.Resource{
 			//"chef_acl":           resourceChefAcl(),
 			//"chef_client":        resourceChefClient(),
