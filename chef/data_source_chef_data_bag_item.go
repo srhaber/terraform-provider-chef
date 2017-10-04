@@ -27,10 +27,12 @@ func dataSourceChefDataBagItem() *schema.Resource {
 				Optional:  true,
 				Sensitive: true,
 			},
-			"content_json": &schema.Schema{
-				Type:      schema.TypeString,
-				Computed:  true,
-				StateFunc: jsonStateFunc,
+			"content": &schema.Schema{
+				Type:     schema.TypeMap,
+				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 		},
 	}
@@ -55,6 +57,8 @@ func dataSourceChefDataBagItemRead(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
+	var jsonContent []byte
+
 	if key, ok := d.GetOk("encryption_key"); ok {
 		// Build a DataDecryptor
 		decryptor := &datacrypt.DataDecryptor{
@@ -68,20 +72,26 @@ func dataSourceChefDataBagItemRead(d *schema.ResourceData, meta interface{}) err
 			return err
 		}
 
-		jsonContent, err := json.Marshal(value)
+		jsonContent, err = json.Marshal(value)
 		if err != nil {
 			return err
 		}
 
-		d.Set("content_json", string(jsonContent))
 	} else {
-		jsonContent, err := json.Marshal(item)
+		jsonContent, err = json.Marshal(item)
 		if err != nil {
 			return err
 		}
-
-		d.Set("content_json", string(jsonContent))
 	}
+
+	content := map[string]string{}
+	err = json.Unmarshal(jsonContent, &content)
+	if err != nil {
+		return err
+	}
+
+	d.Set("content", content)
+	d.Set("encryption_key", "--REDACTED--")
 
 	return nil
 }
